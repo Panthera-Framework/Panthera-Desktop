@@ -44,3 +44,15 @@ Everytime when you will use --version argument there will be a callback function
 
 Every application requires a good logging so no error should be impossible to fix. So, this is a very simple module, inside of code only one thing you have to do
 is using `self.panthera.logging.output('This is a message', 'module name')`
+
+
+### config
+
+Configuration file is stored by default in ~/.APPNAME_HERE/config.json, it's written in easy to parse JSON format.
+The class provides full read-write support for configuration files.
+
+```python
+self.panthera.config.setKey('key', 'value')
+self.panthera.config.getKey('non-existing-key', 'put default value if does not exists - this is optional')
+self.panthera.config.getKey('key') # return "value", if key does not exists should return None
+```
