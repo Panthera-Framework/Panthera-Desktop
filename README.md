@@ -38,3 +38,9 @@ argsParser.createArgument('--version', argsParser.version, '', 'Display help', a
 ```
 
 Everytime when you will use --version argument there will be a callback function - argsParser.version(data) called with argument data you provided.
+
+
+### logging
+
+Every application requires a good logging so no error should be impossible to fix. So, this is a very simple module, inside of code only one thing you have to do
+is using `self.panthera.logging.output('This is a message', 'module name')`
