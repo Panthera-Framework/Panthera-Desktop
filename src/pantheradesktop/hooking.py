@@ -1,9 +1,16 @@
-"""
-    Hooking (plugins support) module for Panthera Desktop Framework
+#-*- encoding: utf-8 -*-
 
-"""
+__author__ = "Damian Kęska"
+__license__ = "LGPLv3"
+__maintainer__ = "Damian Kęska"
+__copyright__ = "Copyleft by Panthera Desktop Team"
 
 class pantheraHooking:
+    """
+        Hooking (plugins support) module for Panthera Desktop Framework
+
+    """
+
     hooksList = {}
     
     def addOption(self, hookName, func, priority=99):

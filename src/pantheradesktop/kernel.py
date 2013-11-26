@@ -1,9 +1,16 @@
+#-*- encoding: utf-8 -*-
+
 import os
 import sys
 import pantheradesktop.config
 import pantheradesktop.hooking
 import pantheradesktop.logging
 import pantheradesktop.argsparsing
+
+__author__ = "Damian Kęska"
+__license__ = "LGPLv3"
+__maintainer__ = "Damian Kęska"
+__copyright__ = "Copyleft by Panthera Desktop Team"
 
 class pantheraDesktopApplication:
     """
@@ -19,6 +26,7 @@ class pantheraDesktopApplication:
     
     # application name
     appName = "example"
+    version = "0.1"
     
     # directory where to store data eg. ~/.example (will be automaticaly generated in initialize function)
     filesDir = ""
@@ -33,7 +41,7 @@ class pantheraDesktopApplication:
             Create required directories, initialize basic objects
             
         """
-    
+        
         self.filesDir = os.path.expanduser("~/."+self.appName)
         
         # create user's data directory if missing
@@ -46,7 +54,9 @@ class pantheraDesktopApplication:
 
         self.hooking = self.coreClasses['hooking']()
         self.logging = self.coreClasses['logging'](self)
-        self.logging.output('Initializing application', 'pantheraDesktopApplication')
+        
+        # plugins support: action before configuration load
+        self.hooking.execute('app.beforeConfigLoad')
                
         # initialize configuration
         self.config = self.coreClasses['config'](self)
@@ -64,6 +74,9 @@ class pantheraDesktopApplication:
         self.argsParser = self.coreClasses['argsparsing'](self)
         self.argsParser.parse()
         
+        self.logging.output('Initializing application mainloop', 'pantheraDesktopApplication')
+        
+        # plugins support: mainloop
         self.hooking.execute('app.mainloop')
                 
                 

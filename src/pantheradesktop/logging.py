@@ -1,8 +1,20 @@
+#-*- encoding: utf-8 -*-
+
 import inspect
 from time import strftime, localtime
 import time
 
+__author__ = "Damian Kęska"
+__license__ = "LGPLv3"
+__maintainer__ = "Damian Kęska"
+__copyright__ = "Copyleft by Panthera Desktop Team"
+
 class pantheraLogging:
+    """
+        Simple logging and debugging class for Panthera Desktop Framework
+        
+    """
+
     logging = True
     silent = False
     session = ""
