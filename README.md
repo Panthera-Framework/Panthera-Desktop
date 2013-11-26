@@ -2,3 +2,39 @@ Panthera-Desktop
 ================
 
 A very simple desktop framework that includes basic classes required for every desktop application (configuration etc.)
+
+## Basic modules
+
+Every included module can be replaced with your own, eg. you can extend existing module and put it instead of old one.
+
+```python
+import pantheradesktop.hooking.pantheraHooking
+
+class myLoggingClass(pantheradesktop.hooking.pantheraHooking):
+    (...)
+
+kernel.coreClasses['logging'] = myLoggingClass
+```
+
+### argsParser
+
+argsParser is a class that uses argsparse module and extends it by adding callback function to every argument.
+
+You should extend this class by creating your own with custom argument handlers.
+
+```python
+def version(self, value=''):
+        """
+            Example argument handler, shows application version
+            
+        """
+    
+        print(self.panthera.appName + " " +self.panthera.version)
+        sys.exit(0)
+```
+
+```python
+argsParser.createArgument('--version', argsParser.version, '', 'Display help', action='store_true')
+```
+
+Everytime when you will use --version argument there will be a callback function - argsParser.version(data) called with argument data you provided.
