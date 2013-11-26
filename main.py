@@ -12,3 +12,4 @@ import pantheradesktop.kernel
 
 # initialize kernel
 kernel = pantheradesktop.kernel.pantheraDesktopApplication()
+kernel.initialize()
