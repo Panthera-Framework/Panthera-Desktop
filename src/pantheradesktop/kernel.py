@@ -6,6 +6,7 @@ import pantheradesktop.config
 import pantheradesktop.hooking
 import pantheradesktop.logging
 import pantheradesktop.argsparsing
+import pantheradesktop.qtgui
 
 __author__ = "Damian Kęska"
 __license__ = "LGPLv3"
@@ -32,8 +33,20 @@ class pantheraDesktopApplication:
     filesDir = ""
     
     # core classes
-    coreClasses = {'hooking': pantheradesktop.hooking.pantheraHooking, 'logging': pantheradesktop.logging.pantheraLogging, 'argsparsing': pantheradesktop.argsparsing.pantheraArgsParsing, 'config': pantheradesktop.config.pantheraConfig}
+    coreClasses = {
+        'hooking': pantheradesktop.hooking.pantheraHooking, 
+        'logging': pantheradesktop.logging.pantheraLogging, 
+        'argsparsing': pantheradesktop.argsparsing.pantheraArgsParsing, 
+        'config': pantheradesktop.config.pantheraConfig,
+        'gui': pantheradesktop.qtgui.pantheraQTGui # set to None to disable
+    }
     
+    def multipleIsFile(self, dirs, fileName):
+        for path in dirs:
+            if os.path.isfile(path+"/"+fileName):
+                return path+"/"+fileName
+                
+        return False
     
     
     def initialize(self):
@@ -75,6 +88,11 @@ class pantheraDesktopApplication:
         self.argsParser.parse()
         
         self.logging.output('Initializing application mainloop', 'pantheraDesktopApplication')
+        
+        # graphical user interface (if avaliable)
+        if "gui" in self.coreClasses:
+            if self.coreClasses['gui']:
+                self.gui = self.coreClasses['gui'](self)
         
         # plugins support: mainloop
         self.hooking.execute('app.mainloop')

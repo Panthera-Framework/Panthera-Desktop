@@ -32,7 +32,7 @@ class pantheraHooking:
         if not hookName in self.hooksList:
             self.hooksList[hookName] = {}
             
-        self.hooksList[hookName][priority+'_'+func.__str__] = func
+        self.hooksList[hookName][str(priority)+'_'+str(func.__str__)] = func
         
         return True
         
@@ -51,7 +51,7 @@ class pantheraHooking:
             return data
             
         for func in sorted(self.hooksList[hookName]):
-            data = func(data)
+            data = self.hooksList[hookName][func](data)
             
         return data
         
