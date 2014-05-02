@@ -49,7 +49,7 @@ class pantheraDesktopApplication:
         return False
     
     
-    def initialize(self):
+    def initialize(self, quiet=False):
         """
             Create required directories, initialize basic objects
             
@@ -66,7 +66,7 @@ class pantheraDesktopApplication:
                 sys.exit(5)
 
         self.hooking = self.coreClasses['hooking']()
-        self.logging = self.coreClasses['logging'](self)
+        self.logging = self.coreClasses['logging'](self, quiet)
         
         # plugins support: action before configuration load
         self.hooking.execute('app.beforeConfigLoad')
@@ -82,11 +82,14 @@ class pantheraDesktopApplication:
             except Exception as e:
                 print("Cannot create "+self.filesDir+"/config.json, please check permissions (details: "+e.strerror+")")
                 sys.exit(5)
-                
+
+    def main(self, func=None):
+        """ Main function """
+        
         # initialize args parser
         self.argsParser = self.coreClasses['argsparsing'](self)
         self.argsParser.parse()
-        
+    
         self.logging.output('Initializing application mainloop', 'pantheraDesktopApplication')
         
         # graphical user interface (if avaliable)
@@ -96,6 +99,22 @@ class pantheraDesktopApplication:
         
         # plugins support: mainloop
         self.hooking.execute('app.mainloop')
-                
+        
+        if hasattr(func, '__call__'):
+            func(self)
+            
+class pantheraClass:
+    """ Panthera class """
+
+    panthera = ""
+
+    def __init__(self, panthera):
+        """ Initialize object """
+    
+        self.panthera = panthera
+        self.main()
+        
+    def main(self):
+        print("Overwrite me - main()")
                 
                 

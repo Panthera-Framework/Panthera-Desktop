@@ -17,6 +17,7 @@ class pantheraArgsParsing:
 
     description = 'Example app'
     argparse = ""
+    panthera = None
     
     # here will be args and opts stored
     args = None
@@ -80,6 +81,9 @@ class pantheraArgsParsing:
             Run arguments parsing
             
         """
+        
+        if "addArgs" in dir(self):
+            self.addArgs()
         
         self.args = self.argparse.parse_known_args()
         self.opts = self.args[1]

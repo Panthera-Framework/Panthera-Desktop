@@ -51,12 +51,15 @@ class pantheraLogging:
         
         
     
-    def __init__ (self, panthera):
+    def __init__ (self, panthera, quiet=False):
         """ 
             Constructor, takes panthera object as argument 
         """
     
         self.panthera = panthera
+        
+        if quiet:
+            self.silent = True
         
         
 
