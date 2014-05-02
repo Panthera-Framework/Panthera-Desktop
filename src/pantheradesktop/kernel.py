@@ -100,7 +100,7 @@ class pantheraDesktopApplication:
         # plugins support: mainloop
         self.hooking.execute('app.mainloop')
         
-        if hasattr(func, '__call__'):
+        if hasattr(func, '__call__') or "classobj" in str(type(func)):
             func(self)
             
 class pantheraClass:
