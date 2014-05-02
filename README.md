@@ -3,6 +3,21 @@ Panthera-Desktop
 
 A very simple desktop framework that includes basic classes required for every desktop application (configuration etc.)
 
+## Requirements
+
+- Python 2.7 or Python 3
+- [ArgsParse](https://docs.python.org/dev/library/argparse.html)
+- (Optional) PySide or PyQT4 for Qt based GUI support
+
+## Installation
+
+```bash
+cd /tmp
+git clone https://github.com/Panthera-Framework/Panthera-Desktop
+cd Panthera-Desktop
+sudo ./setup.py install
+```
+
 ## Basic modules
 
 Every included module can be replaced with your own, eg. you can extend existing module and put it instead of old one.
