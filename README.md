@@ -7,7 +7,7 @@ A very simple desktop framework that includes basic classes required for every d
 
 - Python 2.7 or Python 3
 - [ArgsParse](https://docs.python.org/dev/library/argparse.html)
-- (Optional) PySide or PyQT4
+- (Optional) PySide or PyQT4 for Qt based GUI support
 
 ## Installation
 
