@@ -2,11 +2,13 @@
 
 import os
 import sys
+import atexit
 import pantheradesktop.config
 import pantheradesktop.hooking
 import pantheradesktop.logging
 import pantheradesktop.argsparsing
 import pantheradesktop.qtgui
+import pantheradesktop.db
 
 __author__ = "Damian Kęska"
 __license__ = "LGPLv3"
@@ -38,7 +40,8 @@ class pantheraDesktopApplication:
         'logging': pantheradesktop.logging.pantheraLogging, 
         'argsparsing': pantheradesktop.argsparsing.pantheraArgsParsing, 
         'config': pantheradesktop.config.pantheraConfig,
-        'gui': pantheradesktop.qtgui.pantheraQTGui # set to None to disable
+        'gui': pantheradesktop.qtgui.pantheraQTGui, # set to None to disable
+        'db': pantheradesktop.db.pantheraDB
     }
     
     def multipleIsFile(self, dirs, fileName):
@@ -55,6 +58,7 @@ class pantheraDesktopApplication:
             
         """
         
+        atexit.register(self.pa_exit)
         self.filesDir = os.path.expanduser("~/."+self.appName)
         
         # create user's data directory if missing
@@ -71,9 +75,6 @@ class pantheraDesktopApplication:
         # plugins support: action before configuration load
         self.hooking.execute('app.beforeConfigLoad')
                
-        # initialize configuration
-        self.config = self.coreClasses['config'](self)
-        
         if not os.path.isfile(self.filesDir+"/config.json"):
             try:
                 w = open(self.filesDir+"/config.json", "w")
@@ -81,8 +82,16 @@ class pantheraDesktopApplication:
                 w.close()
             except Exception as e:
                 print("Cannot create "+self.filesDir+"/config.json, please check permissions (details: "+e.strerror+")")
-                sys.exit(5)
-
+                sys.exit(5)       
+        
+        # initialize configuration
+        self.config = self.coreClasses['config'](self)
+        self.config.configPath = self.filesDir+"/config.json"
+        
+        # initialize database
+        if self.coreClasses['db']:
+            self.db = self.coreClasses['db'](self)
+            
     def main(self, func=None):
         """ Main function """
         
@@ -102,6 +111,11 @@ class pantheraDesktopApplication:
         
         if hasattr(func, '__call__') or "classobj" in str(type(func)):
             func(self)
+            
+    def pa_exit(self):
+        """ On application exit """
+    
+        self.hooking.execute('app.pa_exit')
             
 class pantheraClass:
     """ Panthera class """

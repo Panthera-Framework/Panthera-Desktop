@@ -1,4 +1,5 @@
 import json
+import sys
 
 class pantheraConfig:
     """
@@ -15,6 +16,7 @@ class pantheraConfig:
     
     def __init__(self, panthera):
         self.panthera = panthera
+        self.panthera.hooking.addOption('app.pa_exit', self.save, 1)
     
     def loadConfig(self):
         """
@@ -22,12 +24,11 @@ class pantheraConfig:
             
         """
     
-        t = open(self.configPath, "rb")
-        
         try:
+            t = open(self.configPath, "rb")
             memory = json.loads(t.read())
         except Exception as e:
-            print("Cannot parse configuration file, "+e.strerror)
+            print("Cannot parse configuration file \""+self.configPath+"\": "+e.strerror)
             sys.exit(5) # errno.EIO = 5
             
         t.close()
@@ -43,7 +44,7 @@ class pantheraConfig:
         
         """
     
-        if not memory:
+        if not self.memory:
             self.loadConfig();
     
         if key in self.memory:
@@ -67,7 +68,7 @@ class pantheraConfig:
         if type(key) is not str:
             return False
             
-        if type(value) is module or type(value) == object:
+        if type(value) is type(sys) or type(value) == object:
             return False
     
         self.configurationChanged = True
@@ -78,7 +79,7 @@ class pantheraConfig:
         
     """
         
-    def save():
+    def save(self, a=0, b=0, c=0):
         if self.configurationChanged:
             w = open(self.configPath, "wb")
             w.write(json.dumps(self.memory))
