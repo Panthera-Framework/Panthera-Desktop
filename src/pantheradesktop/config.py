@@ -82,7 +82,7 @@ class pantheraConfig:
     def save(self, a=0, b=0, c=0):
         if self.configurationChanged:
             w = open(self.configPath, "wb")
-            w.write(json.dumps(self.memory))
+            w.write(json.dumps(self.memory, sort_keys=True, indent=4, separators=(',', ': ')))
             w.close()
         
         

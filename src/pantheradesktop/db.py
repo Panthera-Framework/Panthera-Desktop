@@ -58,19 +58,30 @@ class pantheraDB:
                 self.dbType = "peewee"
             
         # SQLite3 database
-        elif self.panthera.config.getKey('databaseType') == 'sqlite':
+        elif self.panthera.config.getKey('databaseType') == 'sqlite3':
             self.db = sqlite.connect(self.panthera.config.getKey('databaseFile', self.panthera.filesDir+"/db.sqlite3"))
             self.cursor = self.db.cursor()
             self.dbType = "sqlite3"
             
     def query(self, query, values=None):
         """ Execute a raw query """
+        
+        self.panthera.logging.output(query, "pantheraDB")
     
         if self.dbType == "peewee":
             return self.db.execute_sql(query, values)
             
         elif self.dbType == "sqlite3":
-            return self.cursor.execute(query, values)
+            return pantheraDBSQLite3ResultSet(self.cursor.execute(query, values), self.cursor)
         
+class pantheraDBSQLite3ResultSet:
+    """ Result set for SQLite3 """
+
+    db = None
+    cursor = None
+
+    def __init__(self, cursor, db):
+        self.db = db
+        self.cursor = cursor
             
         
