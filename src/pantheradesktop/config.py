@@ -23,10 +23,12 @@ class pantheraConfig:
             Load configuration from JSON file to memory
             
         """
+        
+        self.panthera.logging.output("Loading configuration from path "+self.configPath, "pantheraConfig")
     
         try:
             t = open(self.configPath, "rb")
-            memory = json.loads(t.read())
+            self.memory = json.loads(t.read())
         except Exception as e:
             print("Cannot parse configuration file \""+self.configPath+"\": "+e.strerror)
             sys.exit(5) # errno.EIO = 5
@@ -43,10 +45,10 @@ class pantheraConfig:
             defaultValue - default value to set if key does not exists yet
         
         """
-    
+        
         if not self.memory:
             self.loadConfig();
-    
+            
         if key in self.memory:
             return self.memory[key]
             

@@ -20,6 +20,7 @@ class pantheraLogging:
     session = ""
     panthera = ""
     lastLogTime = 0
+    lastMsgTime = 0
     
     
     
@@ -45,7 +46,12 @@ class pantheraLogging:
         diff = "-"
     
         if self.lastLogTime > 0:
-            diff = time.time()-self.lastLogTime
+            diff = str(time.time()-self.lastLogTime)+ " real"
+        elif self.lastMsgTime > 0:
+            diff = str(time.time()-self.lastMsgTime)
+            
+        self.lastMsgTime = time.time()
+        diff = diff[0:10]
     
         return "["+str(time.time())+", "+str(diff)+"] "+stackPosition+": "+message
         
