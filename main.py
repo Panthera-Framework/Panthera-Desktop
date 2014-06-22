@@ -24,7 +24,7 @@ kernel.initialize(quiet=False)
 kernel.main()
 
 # SQL Test
-query = kernel.db.query('SELECT * FROM `lnx_config_overlay`')
+query = kernel.db.query('SELECT * FROM `lnx_config_overlay` WHERE `key` = :key', {'key': 'autoloader'})
 query.indexColumn = 'key'
 
 print(query.fetchAll())
