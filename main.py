@@ -19,4 +19,13 @@ import pantheradesktop.kernel
 
 # initialize kernel
 kernel = pantheradesktop.kernel.pantheraDesktopApplication()
-kernel.initialize()
+kernel.coreClasses['gui'] = False
+kernel.initialize(quiet=False)
+kernel.main()
+
+# SQL Test
+query = kernel.db.query('SELECT * FROM `lnx_config_overlay`')
+query.indexColumn = 'key'
+
+print(query.fetchAll())
+

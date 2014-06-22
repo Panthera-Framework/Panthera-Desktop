@@ -9,6 +9,7 @@ import sys
 
 try:
     import MySQLdb
+    import MySQLdb.cursors
 except ImportError:
     pass
     
@@ -37,6 +38,8 @@ class pantheraDB:
         """ Initialize connection """
     
         self.panthera = panthera
+        
+        self.panthera.logging.output("Initializing pantheraDB", "pantheraDB")
         
         # Create some default configuration keys
         self.panthera.config.getKey('databaseHost', 'localhost')
@@ -75,15 +78,20 @@ class pantheraDB:
                 self.dbType = "sqlite3"
                 
             elif self.panthera.config.getKey('databaseType') == 'mysql':
+                
                 self.db = MySQLdb.connect(
                     host=self.panthera.config.getKey('databaseHost'),
                     user=self.panthera.config.getKey('databaseUser'),
                     passwd=self.panthera.config.getKey('databasePassword'),
-                    db=self.panthera.config.getKey('databaseDB')
+                    db=self.panthera.config.getKey('databaseDB'),
+                    cursorclass=MySQLdb.cursors.DictCursor
                 )
                 
                 self.cursor = self.db.cursor()
                 self.dbType = "mysql"
+            else:
+                self.panthera.logging.output("Unknown database driver \'"+str(self.panthera.config.getKey('databaseType'))+"\'", "pantheraDB")
+                sys.exit(1)
                 
             self.panthera.logging.output("Connection estabilished using "+self.dbType+" socket", "pantheraDB")
         except Exception as e:
@@ -101,6 +109,11 @@ class pantheraDB:
         elif self.dbType == "sqlite3":
             return pantheraDBSQLite3ResultSet(self.cursor.execute(query), self.cursor)
         
+        elif self.dbType == 'mysql':
+            return pantheraDBMySQLResultSet(self.cursor, self, self.cursor.execute(query))
+
+
+
 class pantheraDBSQLite3ResultSet:
     """ Result set for SQLite3 """
 
@@ -109,10 +122,13 @@ class pantheraDBSQLite3ResultSet:
     lastrowid = None
     indexColumn = None
 
-    def __init__(self, cursor, db):
+    def __init__(self, cursor, db, result=''):
         self.db = db
         self.cursor = cursor
-        self.lastrowid = cursor.lastrowid
+        self.lastrowid = 0
+        
+        if cursor:
+            self.lastrowid = cursor.lastrowid
         
     def indexColumn(self, columnName):
         """ Column to index by """
@@ -122,6 +138,9 @@ class pantheraDBSQLite3ResultSet:
         
     def rowCount(self):
         """ Count affected/selected rows """
+        
+        if not self.cursor:
+            return 0
     
         rowCount = self.cursor.rowcount
         
@@ -132,6 +151,9 @@ class pantheraDBSQLite3ResultSet:
         
     def fetchAll(self):
         """ Fetch all rows """
+        
+        if not self.cursor:
+            return list()
     
         f = self.cursor.fetchall()
         
@@ -147,9 +169,22 @@ class pantheraDBSQLite3ResultSet:
         
     def fetch(self):
         """ Fetch one row """
+        
+        if not self.cursor:
+            return False
     
         return self.cursor.fetchone()
-        
+
+    
+class pantheraDBMySQLResultSet(pantheraDBSQLite3ResultSet):
+    """ Result set for SQLite3 """
+
+    db = None
+    cursor = None
+    lastrowid = None
+    indexColumn = None
+    
+            
 def dict_factory(cursor, row):
     """ Dictionary factory for SQLite3 """
 
