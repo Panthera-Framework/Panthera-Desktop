@@ -107,10 +107,10 @@ class pantheraDB:
     def query(self, query, values=dict()):
         """ Execute a raw query """
         
-        self.panthera.logging.output(query, "pantheraDB")
+        self.panthera.logging.output("Original: "+query, "pantheraDB")
         
         # inserting escaped values into query
-        query = self.applyValues("Original: "+query, values)
+        query = self.applyValues(query, values)
 
         # {$db_prefix} insertion support
         query = query.replace('{$db_prefix}', str(self.panthera.config.getKey('databasePrefix', 'pa_')))
@@ -147,6 +147,7 @@ class pantheraDB:
             query = query.replace(':'+value, str(values[value]))
         
         return query
+
 
 class pantheraDBSQLite3ResultSet:
     """ Result set for SQLite3 """
