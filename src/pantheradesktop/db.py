@@ -123,6 +123,9 @@ class pantheraDB:
         
         elif self.dbType == 'mysql':
             return pantheraDBMySQLResultSet(self.cursor, self, self.cursor.execute(query))
+        else:
+            self.panthera.logging.output("Cannot connect to databse via unknown socket", "pantheraDB")
+            sys.exit(1)
 
 
     def applyValues(self, query, values):

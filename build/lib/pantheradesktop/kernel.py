@@ -196,3 +196,18 @@ class pantheraWorkThread(QtCore.QThread):
 
     def run(self):
         QtCore.QThread.run(self)
+        
+def createThread(callable, args='', autostart=True):
+    """ Create a Worker and Thread and connect them """
+    
+    appThread = pantheradesktop.kernel.pantheraWorkThread()
+    appWorker = pantheradesktop.kernel.pantheraWorker()
+    appWorker.setJob(callable, args)
+    appWorker.moveToThread(appThread)
+    appWorker.finished.connect(appThread.quit)
+    appThread.started.connect(appWorker.run)
+    
+    if autoStart:
+        appThread.start()
+    
+    return appThread, appWorker

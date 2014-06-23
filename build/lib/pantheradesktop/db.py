@@ -6,9 +6,11 @@ __maintainer__ = "Damian Kęska"
 __copyright__ = "Copyleft by Panthera Desktop Team"
 
 import sys
+import codecs
 
 try:
     import MySQLdb
+    import MySQLdb.cursors
 except ImportError:
     pass
     
@@ -32,11 +34,14 @@ class pantheraDB:
     db = None
     cursor = None
     dbType = None
+    escapeFunc = None
 
     def __init__(self, panthera):
         """ Initialize connection """
     
         self.panthera = panthera
+        
+        self.panthera.logging.output("Initializing pantheraDB", "pantheraDB")
         
         # Create some default configuration keys
         self.panthera.config.getKey('databaseHost', 'localhost')
@@ -73,17 +78,26 @@ class pantheraDB:
                 self.db.row_factory = dict_factory
                 self.cursor = self.db.cursor()
                 self.dbType = "sqlite3"
+                self.escapeFunc = quoteIdentifier
                 
             elif self.panthera.config.getKey('databaseType') == 'mysql':
+                
                 self.db = MySQLdb.connect(
                     host=self.panthera.config.getKey('databaseHost'),
                     user=self.panthera.config.getKey('databaseUser'),
                     passwd=self.panthera.config.getKey('databasePassword'),
-                    db=self.panthera.config.getKey('databaseDB')
+                    db=self.panthera.config.getKey('databaseDB'),
+                    cursorclass=MySQLdb.cursors.DictCursor
                 )
+                
+                # escape function
+                self.escapeFunc = self.db.escape_string
                 
                 self.cursor = self.db.cursor()
                 self.dbType = "mysql"
+            else:
+                self.panthera.logging.output("Unknown database driver \'"+str(self.panthera.config.getKey('databaseType'))+"\'", "pantheraDB")
+                sys.exit(1)
                 
             self.panthera.logging.output("Connection estabilished using "+self.dbType+" socket", "pantheraDB")
         except Exception as e:
@@ -95,12 +109,40 @@ class pantheraDB:
         
         self.panthera.logging.output(query, "pantheraDB")
         
+        # inserting escaped values into query
+        query = self.applyValues(query, values)
+
+        # {$db_prefix} insertion support
+        query = query.replace('{$db_prefix}', str(self.panthera.config.getKey('databasePrefix', 'pa_')))
+        
         if self.dbType == "peewee":
             return self.db.execute_sql(query)
             
         elif self.dbType == "sqlite3":
             return pantheraDBSQLite3ResultSet(self.cursor.execute(query), self.cursor)
         
+        elif self.dbType == 'mysql':
+            return pantheraDBMySQLResultSet(self.cursor, self, self.cursor.execute(query))
+
+
+    def applyValues(self, query, values):
+        """ Append values from dict to query string """
+        
+        for value in values:
+            # integer
+            if values[value].isdigit():
+                pass
+            # boolean
+            elif isinstance(values[value], bool):
+                values[value] = bool(values[value])
+            # string and others
+            else:
+                values[value] = '"'+str(values[value])+'"'
+                
+            query = query.replace(':'+value, str(values[value]))
+        
+        return query
+
 class pantheraDBSQLite3ResultSet:
     """ Result set for SQLite3 """
 
@@ -109,10 +151,13 @@ class pantheraDBSQLite3ResultSet:
     lastrowid = None
     indexColumn = None
 
-    def __init__(self, cursor, db):
+    def __init__(self, cursor, db, result=''):
         self.db = db
         self.cursor = cursor
-        self.lastrowid = cursor.lastrowid
+        self.lastrowid = 0
+        
+        if cursor:
+            self.lastrowid = cursor.lastrowid
         
     def indexColumn(self, columnName):
         """ Column to index by """
@@ -122,6 +167,9 @@ class pantheraDBSQLite3ResultSet:
         
     def rowCount(self):
         """ Count affected/selected rows """
+        
+        if not self.cursor:
+            return 0
     
         rowCount = self.cursor.rowcount
         
@@ -132,6 +180,9 @@ class pantheraDBSQLite3ResultSet:
         
     def fetchAll(self):
         """ Fetch all rows """
+        
+        if not self.cursor:
+            return list()
     
         f = self.cursor.fetchall()
         
@@ -147,9 +198,35 @@ class pantheraDBSQLite3ResultSet:
         
     def fetch(self):
         """ Fetch one row """
+        
+        if not self.cursor:
+            return False
     
         return self.cursor.fetchone()
-        
+
+    
+class pantheraDBMySQLResultSet(pantheraDBSQLite3ResultSet):
+    """ Result set for SQLite3 """
+
+    db = None
+    cursor = None
+    lastrowid = None
+    indexColumn = None
+    
+def quoteIdentifier(s, errors="strict"):
+    encodable = s.encode("utf-8", errors).decode("utf-8")
+
+    nul_index = encodable.find("\x00")
+
+    if nul_index >= 0:
+        error = UnicodeEncodeError("NUL-terminated utf-8", encodable,
+                                   nul_index, nul_index + 1, "NUL not allowed")
+        error_handler = codecs.lookup_error(errors)
+        replacement, _ = error_handler(error)
+        encodable = encodable.replace("\x00", replacement)
+
+    return "\"" + encodable.replace("\"", "\"\"") + "\""
+            
 def dict_factory(cursor, row):
     """ Dictionary factory for SQLite3 """
 
