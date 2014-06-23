@@ -110,10 +110,12 @@ class pantheraDB:
         self.panthera.logging.output(query, "pantheraDB")
         
         # inserting escaped values into query
-        query = self.applyValues(query, values)
+        query = self.applyValues("Original: "+query, values)
 
         # {$db_prefix} insertion support
         query = query.replace('{$db_prefix}', str(self.panthera.config.getKey('databasePrefix', 'pa_')))
+        
+        self.panthera.logging.output("SQL: "+query, "pantheraDB")
         
         if self.dbType == "peewee":
             return self.db.execute_sql(query)
@@ -133,7 +135,7 @@ class pantheraDB:
         
         for value in values:
             # integer
-            if values[value].isdigit():
+            if str(values[value]).isdigit():
                 pass
             # boolean
             elif isinstance(values[value], bool):
