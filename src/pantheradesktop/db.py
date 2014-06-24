@@ -104,7 +104,7 @@ class pantheraDB:
             self.panthera.logging.output("Cannot connect to database: "+str(e), "pantheraDB")
             sys.exit(1)
             
-    def query(self, query, values=dict()):
+    def query(self, query, values=dict(), commit=True):
         """ Execute a raw query """
         
         self.panthera.logging.output("Original: "+query, "pantheraDB")
@@ -121,10 +121,20 @@ class pantheraDB:
             return self.db.execute_sql(query)
             
         elif self.dbType == "sqlite3":
-            return pantheraDBSQLite3ResultSet(self.cursor.execute(query), self.cursor)
+            obj = self.cursor.execute(query)
+            
+            if commit:
+                self.db.commit()
+                
+            return pantheraDBSQLite3ResultSet(obj, self.cursor)
         
         elif self.dbType == 'mysql':
-            return pantheraDBMySQLResultSet(self.cursor, self, self.cursor.execute(query))
+            obj = self.cursor.execute(query)
+            
+            if commit:
+                self.db.commit()
+                
+            return pantheraDBMySQLResultSet(self.cursor, self, obj)
         else:
             self.panthera.logging.output("Cannot connect to databse via unknown socket", "pantheraDB")
             sys.exit(1)
