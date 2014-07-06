@@ -3,6 +3,8 @@
 import inspect
 from time import strftime, localtime
 import time
+import sys
+import traceback
 
 __author__ = "Damian Kęska"
 __license__ = "LGPLv3"
@@ -67,7 +69,9 @@ class pantheraLogging:
         if quiet:
             self.silent = True
         
-        
+    def outputException(self, *args, **kwargs):
+        self.output(*args, **kwargs)
+        traceback.print_exc(file=sys.stdout)
 
     def output(self, message, group='', savetoLogs=True, execHook=True, skipDate=False):
         """ 

@@ -7,6 +7,7 @@ __copyright__ = "Copyleft by Panthera Desktop Team"
 
 import sys
 import codecs
+import traceback
 
 try:
     import MySQLdb
@@ -22,6 +23,11 @@ except ImportError:
 try:
     from peewee import *
     import peewee
+except ImportError:
+    pass
+
+try:
+    from pymongo import MongoClient
 except ImportError:
     pass
 
@@ -56,8 +62,15 @@ class pantheraDB:
             sys.exit(1)
             
         try:
-            # Peewee ORM database
-            if self.panthera.config.getKey('databaseType', 'orm') == 'orm':
+            dbType = self.panthera.config.getKey('databaseType', 'orm').lower()
+            
+            ###
+             #
+             # Peewee ORM database
+             #
+            ###
+            
+            if dbType == 'orm':
                 if not "peewee" in globals():
                     self.panthera.logging.output("Peewee module not found, but orm database type selected", "pantheraDB")
                     sys.exit(1)
@@ -72,15 +85,26 @@ class pantheraDB:
                     self.BaseModel = BaseModel
                     self.dbType = "peewee"
                 
-            # SQLite3 database
-            elif self.panthera.config.getKey('databaseType') == 'sqlite3':
+            ###
+             #
+             # SQLite3 native support
+             #
+            ###
+            
+            elif dbType == 'sqlite3':
                 self.db = sqlite3.connect(self.panthera.config.getKey('databaseFile'))
                 self.db.row_factory = dict_factory
                 self.cursor = self.db.cursor()
                 self.dbType = "sqlite3"
                 self.escapeFunc = quoteIdentifier
                 
-            elif self.panthera.config.getKey('databaseType') == 'mysql':
+            ###
+             #
+             # MySQL (MySQLdb driver)
+             #
+            ###
+                
+            elif dbType == 'mysql':
                 
                 self.db = MySQLdb.connect(
                     host=self.panthera.config.getKey('databaseHost'),
@@ -95,17 +119,37 @@ class pantheraDB:
                 
                 self.cursor = self.db.cursor()
                 self.dbType = "mysql"
+                
+            ###
+             #
+             # MongoDB
+             #
+            ###
+            
+            elif dbType == 'mongodb':
+                self.db = MongoClient(str(self.panthera.config.getKey('databaseHost')), int(self.panthera.config.getKey('databasePort', 27017)))
+                
+                if self.panthera.config.getKey('databaseUser') and self.panthera.config.getKey('databasePassword'):
+                    self.db.the_database.authenticate(self.panthera.config.getKey('databaseUser'), self.panthera.config.getKey('databasePassword'))
+                
+                self.dbType = "mongodb"
             else:
                 self.panthera.logging.output("Unknown database driver \'"+str(self.panthera.config.getKey('databaseType'))+"\'", "pantheraDB")
                 sys.exit(1)
                 
             self.panthera.logging.output("Connection estabilished using "+self.dbType+" socket", "pantheraDB")
         except Exception as e:
-            self.panthera.logging.output("Cannot connect to database: "+str(e), "pantheraDB")
+            self.panthera.logging.outputException("Cannot connect to database: "+str(e), "pantheraDB")
             sys.exit(1)
             
     def query(self, query, values=dict(), commit=True):
         """ Execute a raw query """
+        
+        ###
+         #
+         # Append database prefix and insert values into a query
+         #
+        ###
         
         self.panthera.logging.output("Original: "+query, "pantheraDB")
         
@@ -116,6 +160,12 @@ class pantheraDB:
         query = query.replace('{$db_prefix}', str(self.panthera.config.getKey('databasePrefix', 'pa_')))
         
         self.panthera.logging.output("SQL: "+query, "pantheraDB")
+        
+        ###
+         #
+         # Make q query and return a resultset
+         #
+        ###
         
         if self.dbType == "peewee":
             return self.db.execute_sql(query)
@@ -135,6 +185,9 @@ class pantheraDB:
                 self.db.commit()
                 
             return pantheraDBMySQLResultSet(self.cursor, self, obj)
+        
+        elif self.dbType == 'mongodb':
+            raise Exception('query() is not supported by MongoDB database type')
         else:
             self.panthera.logging.output("Cannot connect to databse via unknown socket", "pantheraDB")
             sys.exit(1)

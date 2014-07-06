@@ -44,7 +44,7 @@ class pantheraDesktopApplication(Singleton):
     __appMain = ""
     
     # application name
-    appName = "example"
+    appName = "pantheradesktop-exampleapp"
     version = "0.1"
     
     # directory where to store data eg. ~/.example (will be automaticaly generated in initialize function)

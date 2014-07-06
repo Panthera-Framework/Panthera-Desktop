@@ -30,7 +30,7 @@ class pantheraConfig:
             t = open(self.configPath, "rb")
             self.memory = json.loads(t.read())
         except Exception as e:
-            print("Cannot parse configuration file \""+self.configPath+"\": "+e.strerror)
+            print("Cannot parse configuration file \""+self.configPath+"\"")
             sys.exit(5) # errno.EIO = 5
             
         t.close()
