@@ -6,8 +6,17 @@ import atexit
 import pantheradesktop.config
 import pantheradesktop.hooking
 import pantheradesktop.logging
-import pantheradesktop.argsparsing
-import pantheradesktop.qtgui
+
+try:
+    import pantheradesktop.argsparsing
+except Exception:
+    pass
+
+try:
+    import pantheradesktop.qtgui
+except Exception:
+    pass
+
 import pantheradesktop.db
 
 try:
