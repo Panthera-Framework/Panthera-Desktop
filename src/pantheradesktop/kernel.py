@@ -173,7 +173,7 @@ class pantheraWorker(QtCore.QObject):
     
     def setJob(self, job, args=''):
         self.job = job
-        self.args = args
+        self.jobArgs = args
     
     """
         Run callable function inside of thread
@@ -182,7 +182,7 @@ class pantheraWorker(QtCore.QObject):
     def run(self):
         if self.job:
             if self.jobArgs:
-                self.job(*self.jobArgs)
+                self.job(self.jobArgs)
             else:
                 self.job()
         else:
@@ -216,7 +216,7 @@ def createThread(callable, args='', autostart=True):
     appWorker.finished.connect(appThread.quit)
     appThread.started.connect(appWorker.run)
     
-    if autoStart:
+    if autostart:
         appThread.start()
     
     return appThread, appWorker
