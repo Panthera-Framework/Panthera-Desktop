@@ -170,10 +170,12 @@ class pantheraWorker(QtCore.QObject):
     dataReady = QtCore.pyqtSignal(list, dict)
     job = None
     jobArgs = None
+    thread = None
     
-    def setJob(self, job, args=''):
+    def setJob(self, job, args='', thread=''):
         self.job = job
         self.jobArgs = args
+        self.thread = thread
     
     """
         Run callable function inside of thread
@@ -182,15 +184,14 @@ class pantheraWorker(QtCore.QObject):
     def run(self):
         if self.job:
             if self.jobArgs:
-                self.job(self.jobArgs)
+                self.job(self.jobArgs, self.thread)
             else:
-                self.job()
+                self.job(thread=self.thread)
         else:
             print("Warning: pantheraWorker job was not set")
             
         self.finished.emit()
             
-
 class pantheraWorkThread(QtCore.QThread):
     def __init__(self, parent=None):
         QtCore.QThread.__init__(self, parent)
@@ -211,9 +212,9 @@ def createThread(callable, args='', autostart=True):
     
     appThread = pantheradesktop.kernel.pantheraWorkThread()
     appWorker = pantheradesktop.kernel.pantheraWorker()
-    appWorker.setJob(callable, args)
+    appWorker.setJob(callable, args, appThread)
     appWorker.moveToThread(appThread)
-    appWorker.finished.connect(appThread.quit)
+    appWorker.finished.connect(appThread.terminate)
     appThread.started.connect(appWorker.run)
     
     if autostart:
