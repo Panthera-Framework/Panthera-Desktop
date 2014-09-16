@@ -7,7 +7,7 @@ A very simple desktop framework that includes basic classes required for every d
 
 - Python 2.7 or Python 3
 - [ArgParse](https://docs.python.org/dev/library/argparse.html)
-- (Optional) PySide or PyQT4 for Qt based GUI support
+- PySide or PyQT4 for Qt based GUI and Threading (on server CLI app Qt is only used for threading and does not require X11/Wayland or Mir)
 
 ## Installation
 
