@@ -92,7 +92,7 @@ class pantheraDB:
             ###
             
             elif dbType == 'sqlite3':
-                self.db = sqlite3.connect(self.panthera.config.getKey('databaseFile'))
+                self.db = sqlite3.connect(self.panthera.config.getKey('databaseFile'), check_same_thread=False)
                 self.db.row_factory = dict_factory
                 self.cursor = self.db.cursor()
                 self.dbType = "sqlite3"
