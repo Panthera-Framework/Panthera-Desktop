@@ -6,6 +6,7 @@ import atexit
 import pantheradesktop.config
 import pantheradesktop.hooking
 import pantheradesktop.logging
+import pantheradesktop.tools as tools
 
 try:
     import pantheradesktop.argsparsing
