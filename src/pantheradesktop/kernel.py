@@ -1,6 +1,7 @@
 #-*- encoding: utf-8 -*-
 
 import os
+import imp
 import sys
 import atexit
 import pantheradesktop.config
@@ -52,6 +53,7 @@ class pantheraDesktopApplication(Singleton):
     argsParser = ""
     app = ""
     __appMain = ""
+    __plugins = {}
     
     # application name
     appName = "pantheradesktop-exampleapp"
@@ -123,13 +125,15 @@ class pantheraDesktopApplication(Singleton):
         # initialize configuration
         self.config = self.coreClasses['config'](self)
         self.config.configPath = self.filesDir+"/config.json"
-        
+
         # initialize database
         if self.coreClasses['db']:
             self.db = self.coreClasses['db'](self)
 
         # initialize plugins
         self.loadPlugins()
+
+
 
     def loadPlugins(self):
         """
@@ -138,8 +142,37 @@ class pantheraDesktopApplication(Singleton):
         :return:
         """
 
-        #for path in self.pluginsSearchDirectories:
-        #    print(path)
+        # create a default value for "plugins" key
+        self.config.getKey('plugins', list())
+        self.config.save()
+
+        for path in self.pluginsSearchDirectories:
+
+            # check only directories that exists in filesystem
+            if not os.path.isdir(path):
+                continue
+
+            files = os.listdir(path)
+
+            for file in files:
+                fileName, fileExtension = os.path.splitext(file)
+
+                if fileExtension.lower() != ".py" or fileName in self.__plugins:
+                    continue
+
+                if self.config.getKey('plugins') and not fileName in self.config.getKey('plugins'):
+                    self.logging.output('Disabling plugin '+fileName, 'pantheraDesktop')
+                    continue
+
+                try:
+                    plugin = imp.load_source(fileName, path+"/"+file)
+                    self.logging.output('Initializing plugin '+fileName, 'pantheraDesktop')
+                    self.__plugins[fileName] = eval("plugin."+fileName+"Plugin(self)")
+
+                except Exception as e:
+                    self.logging.output('Cannot initialize plugin '+path+'/'+file+', details: '+str(e), 'pantheraDesktop')
+
+
 
 
     def main(self, func=None):
