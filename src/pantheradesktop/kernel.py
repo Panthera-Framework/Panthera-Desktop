@@ -89,6 +89,13 @@ class pantheraDesktopApplication(Singleton):
         
         atexit.register(self.pa_exit)
         self.filesDir = os.path.expanduser("~/."+self.appName)
+
+        # plugins paths
+        self.pluginsSearchDirectories = [
+            self.filesDir+'/plugins',
+            '/usr/share/'+self.appName+'/plugins',
+            '/var/lib/'+self.appName+'/plugins'
+        ]
         
         # create user's data directory if missing
         if not os.path.isdir(self.filesDir):
@@ -120,7 +127,21 @@ class pantheraDesktopApplication(Singleton):
         # initialize database
         if self.coreClasses['db']:
             self.db = self.coreClasses['db'](self)
-            
+
+        # initialize plugins
+        self.loadPlugins()
+
+    def loadPlugins(self):
+        """
+        Load application plugins from directories specified in self.pluginsSearchDirectories
+        Only plugins enabled in configuration will be loaded
+        :return:
+        """
+
+        #for path in self.pluginsSearchDirectories:
+        #    print(path)
+
+
     def main(self, func=None):
         """ Main function """
         
