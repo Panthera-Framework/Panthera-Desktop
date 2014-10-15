@@ -130,9 +130,6 @@ class pantheraDesktopApplication(Singleton):
         if self.coreClasses['db']:
             self.db = self.coreClasses['db'](self)
 
-        # initialize plugins
-        self.loadPlugins()
-
 
 
     def loadPlugins(self):
@@ -145,6 +142,8 @@ class pantheraDesktopApplication(Singleton):
         # create a default value for "plugins" key
         self.config.getKey('plugins', list())
         self.config.save()
+
+        self.logging.output('Looking for plugins in: '+str(self.pluginsSearchDirectories), 'pantheraDesktop')
 
         for path in self.pluginsSearchDirectories:
 
@@ -181,6 +180,9 @@ class pantheraDesktopApplication(Singleton):
         # initialize args parser
         self.argsParser = self.coreClasses['argsparsing'](self)
         self.argsParser.parse()
+
+        # initialize plugins
+        self.loadPlugins()
     
         self.logging.output('Initializing application mainloop', 'pantheraDesktopApplication')
         
