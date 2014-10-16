@@ -181,7 +181,10 @@ class pantheraDesktopApplication(Singleton):
         # initialize args parser
         self.argsParser = self.coreClasses['argsparsing'](self)
         self.argsParser.parse()
-    
+
+        # add default value for configAutocommit
+        self.getKey('configAutocommit', True)
+
         self.logging.output('Initializing application mainloop', 'pantheraDesktopApplication')
         
         # graphical user interface (if avaliable)
