@@ -183,7 +183,7 @@ class pantheraDesktopApplication(Singleton):
         self.argsParser.parse()
 
         # add default value for configAutocommit
-        self.getKey('configAutocommit', True)
+        self.config.getKey('configAutocommit', True)
 
         self.logging.output('Initializing application mainloop', 'pantheraDesktopApplication')
         
