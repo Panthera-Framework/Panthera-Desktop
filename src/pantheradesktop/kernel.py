@@ -130,9 +130,6 @@ class pantheraDesktopApplication(Singleton):
         if self.coreClasses['db']:
             self.db = self.coreClasses['db'](self)
 
-        # initialize plugins
-        self.loadPlugins()
-
 
 
     def loadPlugins(self):
@@ -146,6 +143,8 @@ class pantheraDesktopApplication(Singleton):
         self.config.getKey('plugins', list())
         self.config.save()
 
+        self.logging.output('Looking for plugins in: '+str(self.pluginsSearchDirectories), 'pantheraDesktop.plugins')
+
         for path in self.pluginsSearchDirectories:
 
             # check only directories that exists in filesystem
@@ -155,6 +154,7 @@ class pantheraDesktopApplication(Singleton):
             files = os.listdir(path)
 
             for file in files:
+                fileName = os.path.basename(file)
                 fileName, fileExtension = os.path.splitext(file)
 
                 if fileExtension.lower() != ".py" or fileName in self.__plugins:
@@ -165,7 +165,7 @@ class pantheraDesktopApplication(Singleton):
                     continue
 
                 try:
-                    plugin = imp.load_source(fileName, path+"/"+file)
+                    plugin = tools.include(path+"/"+file)
                     self.logging.output('Initializing plugin '+fileName, 'pantheraDesktop')
                     self.__plugins[fileName] = eval("plugin."+fileName+"Plugin(self)")
 
@@ -182,6 +182,9 @@ class pantheraDesktopApplication(Singleton):
         self.argsParser = self.coreClasses['argsparsing'](self)
         self.argsParser.parse()
 
+        # initialize plugins
+        self.loadPlugins()
+
         # add default value for configAutocommit
         self.config.getKey('configAutocommit', True)
 
@@ -197,7 +200,8 @@ class pantheraDesktopApplication(Singleton):
         
         if hasattr(func, '__call__') or "classobj" in str(type(func)):
             self.__appMain = func(self)
-            
+
+
     def pa_exit(self):
         """ On application exit """
     
