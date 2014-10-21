@@ -72,9 +72,12 @@ class pantheraConfig:
             
         if type(value) is type(sys) or type(value) == object:
             return False
-    
+
         self.configurationChanged = True
         self.memory[key] = value
+
+        if self.getKey('configAutocommit'):
+            self.save()
         
     """
         Save configuration right back to json file

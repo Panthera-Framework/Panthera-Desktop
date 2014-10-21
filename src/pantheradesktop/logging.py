@@ -88,3 +88,17 @@ class pantheraLogging:
             print(message)
             
         self.session += message + "\n"
+
+    def flushAndEnablePrinting(self, clearSession=False):
+        """
+        Flush buffers and re-enable log printint to screen
+        :param clearSession:
+        :return:
+        """
+
+        print(self.session[0:-1])
+
+        if clearSession:
+            self.session = ""
+
+        self.silent = False

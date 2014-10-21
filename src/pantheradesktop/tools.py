@@ -1,3 +1,6 @@
+import imp
+import os
+
 def bytes2human(n, format="%(value)i%(symbol)s"):
     """
     >>> bytes2human(10000)
@@ -33,3 +36,12 @@ def human2bytes(s):
     for i, s in enumerate(symbols[1:]):
         prefix[s] = 1 << (i+1)*10
     return int(num * prefix[letter])
+
+def include(path):
+    """
+    Include a Python file
+    :param path: Path to .py file
+    :return:
+    """
+    fileName, fileExtension = os.path.splitext(os.path.basename(path))
+    return imp.load_source(os.path.basename(fileName).replace('.', ''), path)
