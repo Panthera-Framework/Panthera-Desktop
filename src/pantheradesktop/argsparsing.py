@@ -24,6 +24,9 @@ class pantheraArgsParsing:
     args = None
     opts = None
 
+    # plugins management
+    _enablePluginsManagement = True
+
     knownArgs = {}
     
     
@@ -39,9 +42,69 @@ class pantheraArgsParsing:
         self.panthera = panthera
         self.app = panthera
         self.argparse = argparse.ArgumentParser(description=self.description)
-        self.createArgument('--version', self.version, '', 'Display help', action='store_true')
-        
-        
+        self.createArgument('--version', self.version, 'Display help', action='store_true', required=False)
+
+        if self._enablePluginsManagement:
+            self.createArgument('--plugins', self.pluginsList, 'Display plugins list', action='store_true', required=False)
+            self.createArgument('--enablePlugin', self.pluginsEnable, 'Enable plugin', required=False)
+            self.createArgument('--disablePlugin', self.pluginsDisable, 'Enable plugin', required=False)
+
+    def pluginsEnable(self, pluginName='', enable=True):
+        """
+        Enable a plugin
+        :param pluginName:
+        :param enable:
+        :return:
+        """
+
+        self.app.loadPlugins()
+
+        if not pluginName in self.app.pluginsAvailable:
+            print("Cannot toggle plugin: "+str(pluginName)+", file not found")
+            sys.exit(1)
+
+        self.app.togglePlugin(pluginName, enable)
+        sys.exit(0)
+
+    def pluginsDisable(self, pluginName):
+        """
+        Disable a plugin
+        :param pluginName:
+        :return:
+        """
+
+        return self.pluginsEnable(pluginName, False)
+
+    def pluginsList(self, opt=''):
+        """
+        List all plugins (enabled and disabled)
+        :param opt:
+        :return:
+        """
+
+        self.app.loadPlugins()
+
+        print("Application is looking for plugins in those directories: ")
+
+        for directory in self.app.pluginsSearchDirectories:
+            print(directory)
+
+        print("\n")
+
+        if self.app.pluginsAvailable:
+            print("Available plugins: ")
+
+            for plugin in self.app.pluginsAvailable:
+                if plugin in self.app._plugins:
+                    print("[x] "+plugin)
+                else:
+                    print("[ ] "+plugin)
+
+            print("\nx - enabled")
+        else:
+            print("No plugins available\n")
+
+        sys.exit(0)
         
     def version(self, value=''):
         """
@@ -54,7 +117,7 @@ class pantheraArgsParsing:
         
         
         
-    def createArgument(self, arg, callback, default="", help="", required=False, dataType=None, action='store', choices=None, type=None, skipArgParse=False):
+    def createArgument(self, arg, callback, default="", help="", required=False, dataType=None, action='store', choices=None, type=None, skipArgParse=False, short=None):
         """
             Add argument to list of known arguments
             
@@ -69,14 +132,17 @@ class pantheraArgsParsing:
         """
         
         self.knownArgs[arg] = callback
-    
+        argsString = 'arg, default=default, help=help, required=required, action=action'
+
         if not skipArgParse:
-            if action == 'store_true' or action == 'store_const' or action == 'store_false':
-                return self.argparse.add_argument(arg, default=default, help=help, required=required, action=action)
-            
-            return self.argparse.add_argument(arg, default=default, help=help, required=required, action=action, choices=choices, type=type)
-        
-        
+            if not action == 'store_true' and not action == 'store_const' and not action == 'store_false':
+                argsString += ', choices=choices, type=type'
+
+            if short is not None:
+                argsString = 'short, '+argsString
+
+            eval('self.argparse.add_argument('+argsString+')')
+
         
     def parse(self):
         """
