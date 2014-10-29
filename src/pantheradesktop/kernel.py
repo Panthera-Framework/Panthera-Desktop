@@ -53,7 +53,9 @@ class pantheraDesktopApplication(Singleton):
     argsParser = ""
     app = ""
     __appMain = ""
-    __plugins = {}
+    _plugins = {}
+    pluginsLoaded = False
+    pluginsAvailable = []
     
     # application name
     appName = "pantheradesktop-exampleapp"
@@ -130,14 +132,37 @@ class pantheraDesktopApplication(Singleton):
         if self.coreClasses['db']:
             self.db = self.coreClasses['db'](self)
 
+    def togglePlugin(self, pluginName, value=None):
+        """
+        Toggle plugin on/off
+        :param pluginName: Plugin name
+        :return: bool
+        """
 
+        if not self.pluginsLoaded == True:
+            self.loadPlugins()
 
-    def loadPlugins(self):
+        plugins = self.config.getKey('plugins', list())
+
+        if (value == False or (value == None and pluginName in plugins)) and pluginName in plugins:
+            plugins.remove(pluginName)
+        elif value == True or (value == None and pluginName not in plugins):
+            plugins.append(pluginName)
+
+        self.config.setKey('plugins', plugins)
+        self.config.save()
+
+        return True
+
+    def loadPlugins(self, force=False):
         """
         Load application plugins from directories specified in self.pluginsSearchDirectories
         Only plugins enabled in configuration will be loaded
         :return:
         """
+
+        if self.pluginsLoaded == True and not force:
+            return False
 
         # create a default value for "plugins" key
         self.config.getKey('plugins', list())
@@ -157,8 +182,11 @@ class pantheraDesktopApplication(Singleton):
                 fileName = os.path.basename(file)
                 fileName, fileExtension = os.path.splitext(file)
 
-                if fileExtension.lower() != ".py" or fileName in self.__plugins:
+                if fileExtension.lower() != ".py" or fileName in self._plugins:
                     continue
+
+                # append to list of avaliable plugins
+                self.pluginsAvailable.append(fileName)
 
                 if self.config.getKey('plugins') and not fileName in self.config.getKey('plugins'):
                     self.logging.output('Disabling plugin '+fileName, 'pantheraDesktop')
@@ -167,10 +195,12 @@ class pantheraDesktopApplication(Singleton):
                 try:
                     plugin = tools.include(path+"/"+file)
                     self.logging.output('Initializing plugin '+fileName, 'pantheraDesktop')
-                    self.__plugins[fileName] = eval("plugin."+fileName+"Plugin(self)")
+                    self._plugins[fileName] = eval("plugin."+fileName+"Plugin(self)")
 
                 except Exception as e:
                     self.logging.output('Cannot initialize plugin '+path+'/'+file+', details: '+str(e), 'pantheraDesktop')
+
+        self.pluginsLoaded = True
 
 
 
