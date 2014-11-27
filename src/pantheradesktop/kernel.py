@@ -193,9 +193,7 @@ class pantheraDesktopApplication(Singleton):
                     continue
 
                 try:
-                    plugin = tools.include(path+"/"+file)
-                    self.logging.output('Initializing plugin '+fileName, 'pantheraDesktop')
-                    self._plugins[fileName] = eval("plugin."+fileName+"Plugin(self)")
+                    self.loadPlugin(fileName, path+"/"+file)
 
                 except Exception as e:
                     self.logging.output('Cannot initialize plugin '+path+'/'+file+', details: '+str(e), 'pantheraDesktop')
@@ -203,6 +201,54 @@ class pantheraDesktopApplication(Singleton):
         self.pluginsLoaded = True
 
 
+    def loadPlugin(self, pluginName, path=None):
+        """
+        Initialize plugin
+        :param pluginName: Plugin name eg. "backup" or "notify"
+        :param path: Path to plugins directory /usr/share/copysync/plugins
+        :return: object
+        """
+
+        if not path:
+            for directory in self.pluginsSearchDirectories:
+                if pluginName+'.py' in os.listdir(directory):
+                    path = directory
+                    break
+
+        if not path:
+            raise IOError('No such file or directory', 2)
+
+        plugin = tools.include(path)
+        self.logging.output('Initializing plugin '+pluginName, 'pantheraDesktop')
+        self._plugins[fileName] = eval("plugin."+pluginName+"Plugin(self)")
+
+        ## call initializePlugin() method if available
+        if hasattr(self._plugins[pluginName], 'initializePlugin'):
+            self._plugins[fileName].initializePlugin()
+
+        return self._plugins[fileName]
+
+
+    def unloadPlugin(self, pluginName):
+        """
+        Unload plugin
+        :param pluginName: Plugin name eg. "backup" or "notify"
+        :return: bool
+        """
+
+        if not fileName in self._plugins:
+            return False
+
+        ## execute pre-unload function if exists to clean up some stuff
+        if hasattr(self._plugins[pluginName], 'unloadPlugin'):
+            self.logging.output('Calling "'+pluginName+'" plugin to deinitialize itself')
+            self._plugins[fileName].unloadPlugin()
+
+        ## try to remove all hooks defined by plugin we want to remove
+        self.hooking.removeAllByClass(self._plugins[pluginName].__class__.__name__)
+
+        del self._plugins[fileName]
+        return True
 
 
     def main(self, func=None):
