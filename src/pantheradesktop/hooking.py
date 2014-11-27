@@ -35,7 +35,25 @@ class pantheraHooking:
         self.hooksList[hookName][str(priority)+'_'+str(func.__str__)] = func
         
         return True
-        
+
+
+    def removeAllByClass(self, objectClassName):
+        """
+        Remove all hooks that reffers to selected object type
+        :param objectClassName:
+        :return: int Number of affected hooks
+        """
+
+        i = 0
+
+        for hookName, hooks in self.hooksList.iterkeys():
+            for id, hook in hooks.iterkeys():
+                if hasattr(hook, 'im_class') and hook.im_class.__name__ == objectClassName:
+                    self.removeOption(hook, hookName)
+                    i = i + 1
+
+        return i
+
         
     def execute(self, hookName, data=''):
         """
@@ -63,7 +81,7 @@ class pantheraHooking:
             
             Returns bool
         """
-    
+
         return hookName in self.hooksList
         
     def removeOption(self, func, hookName=None):
