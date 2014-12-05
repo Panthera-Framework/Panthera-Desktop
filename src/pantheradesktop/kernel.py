@@ -8,6 +8,7 @@ import pantheradesktop.config
 import pantheradesktop.hooking
 import pantheradesktop.logging
 import pantheradesktop.tools as tools
+import pantheradesktop.instance
 
 try:
     import pantheradesktop.argsparsing
@@ -51,12 +52,13 @@ class pantheraDesktopApplication(Singleton):
     config = "" # cofiguration object
     template = "" # gui template object
     argsParser = ""
+    instances = ""
     app = ""
     __appMain = ""
     _plugins = {}
     pluginsLoaded = False
     pluginsAvailable = []
-    
+
     # application name
     appName = "pantheradesktop-exampleapp"
     version = "0.1"
@@ -71,7 +73,8 @@ class pantheraDesktopApplication(Singleton):
         'argsparsing': pantheradesktop.argsparsing.pantheraArgsParsing, 
         'config': pantheradesktop.config.pantheraConfig,
         'gui': pantheradesktop.qtgui.pantheraQTGui, # set to None to disable
-        'db': pantheradesktop.db.pantheraDB
+        'db': pantheradesktop.db.pantheraDB,
+        'instances': '__initialize__'
     }
     
     def multipleIsFile(self, dirs, fileName):
@@ -90,6 +93,9 @@ class pantheraDesktopApplication(Singleton):
             Create required directories, initialize basic objects
             
         """
+
+        if self.coreClasses['instances'] == '__initialize__' and hasattr(pantheradesktop, 'instance'):
+            self.coreClasses['instances'] = pantheradesktop.instance.pantheraJSONInstance
         
         atexit.register(self.pa_exit)
         self.filesDir = os.path.expanduser("~/."+self.appName)
@@ -131,6 +137,7 @@ class pantheraDesktopApplication(Singleton):
         # initialize database
         if self.coreClasses['db']:
             self.db = self.coreClasses['db'](self)
+
 
     def togglePlugin(self, pluginName, value=None):
         """
@@ -258,6 +265,14 @@ class pantheraDesktopApplication(Singleton):
         self.argsParser = self.coreClasses['argsparsing'](self)
         self.argsParser.parse()
 
+        # validate "instances" module
+        if 'instances' in self.coreClasses and callable(self.coreClasses['instances']) and hasattr(self.coreClasses['instances'], 'register'):
+            self.logging.output('Registering self instance using '+str(self.coreClasses['instances'])+' instance handler')
+            self.instances = self.coreClasses['instances'](self)
+            self.instances.register()
+            self.instances.cleanup()
+            self.hooking.addOption('app.pa_exit', self.instances.unregister)
+
         # initialize plugins
         self.loadPlugins()
 
@@ -283,22 +298,8 @@ class pantheraDesktopApplication(Singleton):
     
         self.hooking.execute('app.pa_exit')
         sys.exit(0)
-            
-class pantheraClass:
-    """ Panthera class """
 
-    panthera = ""
 
-    def __init__(self, panthera):
-        """ Initialize object """
-    
-        self.panthera = panthera
-        self.app = panthera
-        self.main()
-        
-    def main(self):
-        print("Overwrite me - main()")
-    
 class pantheraWorker(QtCore.QObject):
     """
         Worker for pantheraWorkThread
