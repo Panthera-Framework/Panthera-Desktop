@@ -8,6 +8,7 @@ import pantheradesktop.config
 import pantheradesktop.hooking
 import pantheradesktop.logging
 import pantheradesktop.tools as tools
+import pantheradesktop.instance
 
 try:
     import pantheradesktop.argsparsing
@@ -51,12 +52,13 @@ class pantheraDesktopApplication(Singleton):
     config = "" # cofiguration object
     template = "" # gui template object
     argsParser = ""
+    instances = ""
     app = ""
     __appMain = ""
     _plugins = {}
     pluginsLoaded = False
     pluginsAvailable = []
-    
+
     # application name
     appName = "pantheradesktop-exampleapp"
     version = "0.1"
@@ -71,7 +73,8 @@ class pantheraDesktopApplication(Singleton):
         'argsparsing': pantheradesktop.argsparsing.pantheraArgsParsing, 
         'config': pantheradesktop.config.pantheraConfig,
         'gui': pantheradesktop.qtgui.pantheraQTGui, # set to None to disable
-        'db': pantheradesktop.db.pantheraDB
+        'db': pantheradesktop.db.pantheraDB,
+        'instances': '__initialize__'
     }
     
     def multipleIsFile(self, dirs, fileName):
@@ -90,6 +93,9 @@ class pantheraDesktopApplication(Singleton):
             Create required directories, initialize basic objects
             
         """
+
+        if self.coreClasses['instances'] == '__initialize__' and hasattr(pantheradesktop, 'instance'):
+            self.coreClasses['instances'] = pantheradesktop.instance.pantheraJSONInstance
         
         atexit.register(self.pa_exit)
         self.filesDir = os.path.expanduser("~/."+self.appName)
@@ -131,6 +137,7 @@ class pantheraDesktopApplication(Singleton):
         # initialize database
         if self.coreClasses['db']:
             self.db = self.coreClasses['db'](self)
+
 
     def togglePlugin(self, pluginName, value=None):
         """
@@ -193,9 +200,7 @@ class pantheraDesktopApplication(Singleton):
                     continue
 
                 try:
-                    plugin = tools.include(path+"/"+file)
-                    self.logging.output('Initializing plugin '+fileName, 'pantheraDesktop')
-                    self._plugins[fileName] = eval("plugin."+fileName+"Plugin(self)")
+                    self.loadPlugin(fileName, path+"/"+file)
 
                 except Exception as e:
                     self.logging.output('Cannot initialize plugin '+path+'/'+file+', details: '+str(e), 'pantheraDesktop')
@@ -203,6 +208,54 @@ class pantheraDesktopApplication(Singleton):
         self.pluginsLoaded = True
 
 
+    def loadPlugin(self, pluginName, path=None):
+        """
+        Initialize plugin
+        :param pluginName: Plugin name eg. "backup" or "notify"
+        :param path: Path to plugins directory /usr/share/copysync/plugins
+        :return: object
+        """
+
+        if not path:
+            for directory in self.pluginsSearchDirectories:
+                if pluginName+'.py' in os.listdir(directory):
+                    path = directory
+                    break
+
+        if not path:
+            raise IOError('No such file or directory', 2)
+
+        plugin = tools.include(path)
+        self.logging.output('Initializing plugin '+pluginName, 'pantheraDesktop')
+        self._plugins[fileName] = eval("plugin."+pluginName+"Plugin(self)")
+
+        ## call initializePlugin() method if available
+        if hasattr(self._plugins[pluginName], 'initializePlugin'):
+            self._plugins[fileName].initializePlugin()
+
+        return self._plugins[fileName]
+
+
+    def unloadPlugin(self, pluginName):
+        """
+        Unload plugin
+        :param pluginName: Plugin name eg. "backup" or "notify"
+        :return: bool
+        """
+
+        if not fileName in self._plugins:
+            return False
+
+        ## execute pre-unload function if exists to clean up some stuff
+        if hasattr(self._plugins[pluginName], 'unloadPlugin'):
+            self.logging.output('Calling "'+pluginName+'" plugin to deinitialize itself')
+            self._plugins[fileName].unloadPlugin()
+
+        ## try to remove all hooks defined by plugin we want to remove
+        self.hooking.removeAllByClass(self._plugins[pluginName].__class__.__name__)
+
+        del self._plugins[fileName]
+        return True
 
 
     def main(self, func=None):
@@ -211,6 +264,14 @@ class pantheraDesktopApplication(Singleton):
         # initialize args parser
         self.argsParser = self.coreClasses['argsparsing'](self)
         self.argsParser.parse()
+
+        # validate "instances" module
+        if 'instances' in self.coreClasses and callable(self.coreClasses['instances']) and hasattr(self.coreClasses['instances'], 'register'):
+            self.logging.output('Registering self instance using '+str(self.coreClasses['instances'])+' instance handler')
+            self.instances = self.coreClasses['instances'](self)
+            self.instances.register()
+            self.instances.cleanup()
+            self.hooking.addOption('app.pa_exit', self.instances.unregister)
 
         # initialize plugins
         self.loadPlugins()
@@ -234,25 +295,12 @@ class pantheraDesktopApplication(Singleton):
 
     def pa_exit(self):
         """ On application exit """
-    
+
+        self.logging.output('Got interrupt, finishing jobs and exiting...', 'pantheraDesktop')
         self.hooking.execute('app.pa_exit')
         sys.exit(0)
-            
-class pantheraClass:
-    """ Panthera class """
 
-    panthera = ""
 
-    def __init__(self, panthera):
-        """ Initialize object """
-    
-        self.panthera = panthera
-        self.app = panthera
-        self.main()
-        
-    def main(self):
-        print("Overwrite me - main()")
-    
 class pantheraWorker(QtCore.QObject):
     """
         Worker for pantheraWorkThread
