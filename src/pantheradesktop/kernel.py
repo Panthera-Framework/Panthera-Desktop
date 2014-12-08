@@ -295,7 +295,8 @@ class pantheraDesktopApplication(Singleton):
 
     def pa_exit(self):
         """ On application exit """
-    
+
+        self.logging.output('Got interrupt, finishing jobs and exiting...', 'pantheraDesktop')
         self.hooking.execute('app.pa_exit')
         sys.exit(0)
 
