@@ -1,5 +1,8 @@
 #-*- encoding: utf-8 -*-
 
+import inspect
+import time
+
 __author__ = "Damian Kęska"
 __license__ = "LGPLv3"
 __maintainer__ = "Damian Kęska"
@@ -31,8 +34,25 @@ class pantheraHooking:
         # create array if there is no any hooked function yet
         if not hookName in self.hooksList:
             self.hooksList[hookName] = {}
+
+        argsData = False
+
+        try:
+            args = inspect.getargspec(func).args
+
+            if (len(args) > 0 and args[0] != 'self') or (len(args) > 1 and args[0] == 'self'):
+                argsData = True
+
+        except Exception:
+            pass
             
-        self.hooksList[hookName][str(priority)+'_'+str(func.__str__)] = func
+        self.hooksList[hookName][str(priority)+'_'+str(func.__str__)] = {
+            'callback': func,
+            'argsData': argsData,
+            'priority': priority,
+            'created': time.time(),
+            'executed': 0
+        }
         
         return True
 
@@ -48,8 +68,8 @@ class pantheraHooking:
 
         for hookName, hooks in self.hooksList.iterkeys():
             for id, hook in hooks.iterkeys():
-                if hasattr(hook, 'im_class') and hook.im_class.__name__ == objectClassName:
-                    self.removeOption(hook, hookName)
+                if hasattr(hook['callback'], 'im_class') and hook['callback'].im_class.__name__ == objectClassName:
+                    self.removeOption(hook['callback'], hookName)
                     i = i + 1
 
         return i
@@ -67,12 +87,24 @@ class pantheraHooking:
     
         if not hookName in self.hooksList:
             return data
-            
+
         for func in sorted(self.hooksList[hookName]):
-            data = self.hooksList[hookName][func](data)
+            try:
+                # get data
+
+                if self.hooksList[hookName][func]['argsData']:
+                    data = self.hooksList[hookName][func]['callback'](data)
+                else:
+                    data = self.hooksList[hookName][func]['callback']()
+
+                # increase counter
+                self.hooksList[hookName][func]['executed'] = self.hooksList[hookName][func]['executed'] + 1
+            except Exception as e:
+                raise RuntimeError('Cannot execute hooked function: "'+str(self.hooksList[hookName][func]['callback'])+'" in "'+hookName+'" slot, error details: '+str(e), 1)
             
         return data
-        
+
+
     def hookExists(self, hookName):
         """
             Check if hooking slot exists
@@ -83,7 +115,8 @@ class pantheraHooking:
         """
 
         return hookName in self.hooksList
-        
+
+
     def removeOption(self, func, hookName=None):
         """
             Remove an option from hooking slot
@@ -95,7 +128,8 @@ class pantheraHooking:
         """
     
         return isConnected(func, hookName, True)
-        
+
+
     def isConnected(self, func, hookName=None, removeHook=False):
     
         """
@@ -116,7 +150,7 @@ class pantheraHooking:
                 name = self.hooksList[hookName]
         
             for hook in name:
-                if hook == func:
+                if hook['callback'] == func:
                     if removeHook:
                         del self.hooksList[hookName]
                 
