@@ -64,11 +64,9 @@ class pantheraJSONInstance(pantheraClass):
 
         for instanceID,data in instancesList.iteritems():
             if not " "+str(instanceID)+" " in processTable:
-                del newInstancesList[str(instanceID)]
-            else:
-                print(instanceID)
+                del newInstancesList[str(int(instanceID))]
 
-        self.__writeToJSONFile(instancesList)
+        self.__writeToJSONFile(newInstancesList)
         return True
 
 
