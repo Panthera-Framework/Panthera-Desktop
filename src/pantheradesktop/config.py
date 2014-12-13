@@ -93,6 +93,16 @@ class pantheraConfig:
             self.save()
 
 
+    def exists(self, key):
+        """
+        Check if key exists
+        :param key:
+        :return:
+        """
+
+        return key in self.memory
+
+
     def save(self):
         """
             Save configuration right back to json file

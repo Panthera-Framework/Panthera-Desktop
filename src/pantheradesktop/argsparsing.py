@@ -26,6 +26,7 @@ class pantheraArgsParsing:
 
     # plugins management
     _enablePluginsManagement = True
+    _enableConfigManagement = True
 
     knownArgs = {}
     
@@ -46,8 +47,57 @@ class pantheraArgsParsing:
 
         if self._enablePluginsManagement:
             self.createArgument('--plugins', self.pluginsList, 'Display plugins list', action='store_true', required=False)
-            self.createArgument('--enablePlugin', self.pluginsEnable, 'Enable plugin', required=False)
-            self.createArgument('--disablePlugin', self.pluginsDisable, 'Enable plugin', required=False)
+            self.createArgument('--plugins-enable', self.pluginsEnable, 'Enable plugin', required=False)
+            self.createArgument('--plugins-disable', self.pluginsDisable, 'Enable plugin', required=False)
+
+        if self._enableConfigManagement:
+            self.createArgument('--config', self.configKeys, 'List configuration keys', action='store_true', required=False)
+            self.createArgument('--config-set', self.configSetKey, 'Set configuration key value', required=False)
+            self.createArgument('--config-get', self.configGetKey, 'Get configuration value', required=False)
+
+
+    def configKeys(self, opt=''):
+        """
+        List all configuration keys
+        :param opt:
+        :return:
+        """
+
+        self.app.config.loadConfig()
+        print(self.app.config.memory)
+        sys.exit(0)
+
+    def configSetKey(self, key=''):
+        """
+        Set a configuration key
+        :param key: Configuration key name or xpath
+        :return:
+        """
+
+        self.app.config.loadConfig()
+
+        if not len(self.opts):
+            sys.exit(1)
+
+        self.app.config.setKey(key, self.opts[0])
+        self.app.config.save()
+
+        sys.exit(0)
+
+    def configGetKey(self, key=''):
+        """
+        Get configuration key
+        :param key: Key name or xpath
+        :return:
+        """
+
+        self.app.config.loadConfig()
+
+        if self.app.config.exists(key):
+            print(self.app.config.getKey(str(key)))
+            sys.exit(0)
+        else:
+            sys.exit(1)
 
     def pluginsEnable(self, pluginName='', enable=True):
         """
@@ -155,7 +205,7 @@ class pantheraArgsParsing:
         
         self.args = self.argparse.parse_known_args()
         self.opts = self.args[1]
-        
+
         for arg in self.knownArgs:
             if arg in sys.argv:
-                self.knownArgs[arg](self.args[0].__dict__[arg.replace('--', '')])
+                self.knownArgs[arg](self.args[0].__dict__[arg.replace('--', '').replace('-', '_')])
