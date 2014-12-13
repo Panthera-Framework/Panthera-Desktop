@@ -1,6 +1,6 @@
 import json
 import sys
-
+import pantheradesktop.tools as tools
 
 class pantheraConfig:
     """
@@ -14,6 +14,7 @@ class pantheraConfig:
     memory = {}
     configPath = ""
     configurationChanged = False
+    strictTypeChecking = True
 
     def __init__(self, panthera):
         self.panthera = panthera
@@ -29,7 +30,7 @@ class pantheraConfig:
 
         try:
             t = open(self.configPath, "rb")
-            self.memory = json.loads(t.read())
+            self.memory = json.loads(t.read(), object_hook=tools._decode_dict)
         except Exception as e:
             print("Cannot parse configuration file \"" + self.configPath + "\"")
             sys.exit(5)  # errno.EIO = 5
@@ -37,7 +38,7 @@ class pantheraConfig:
         t.close()
 
 
-    def getKey(self, key, defaultValue=None):
+    def getKey(self, key, defaultValue = None, strictTypeChecking = False):
         """
             Get configuration key
         
@@ -49,10 +50,21 @@ class pantheraConfig:
         if not self.memory:
             self.loadConfig()
 
+        ## if strict value type checking is on we will stick with one data type
+        if defaultValue is not None and (self.strictTypeChecking or strictTypeChecking) and key in self.memory:
+
+            if type(defaultValue).__name__ is not type(self.memory[key]).__name__:
+                if self.panthera.logging:
+                    self.panthera.logging.output('Invalid data type for "'+key+'" key ('+type(defaultValue).__name__+', '+type(self.memory[key]).__name__+')', 'pantheraConfig')
+
+                # set default value in case we have an unexpected type set in configuration file
+                self.setKey(key, defaultValue)
+
+
         if key in self.memory:
             return self.memory[key]
 
-        # if key does not exists in key-value database yet, create it with default value
+        ## if key does not exists in key-value database yet, create it with default value
         if defaultValue is not None:
             self.setKey(key, defaultValue)
 
