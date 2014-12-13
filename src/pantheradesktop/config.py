@@ -53,7 +53,7 @@ class pantheraConfig:
         ## if strict value type checking is on we will stick with one data type
         if defaultValue is not None and (self.strictTypeChecking or strictTypeChecking) and key in self.memory:
 
-            if type(defaultValue).__name__ is not type(self.memory[key]).__name__:
+            if str(type(defaultValue).__name__) != str(type(self.memory[key]).__name__):
                 if self.panthera.logging:
                     self.panthera.logging.output('Invalid data type for "'+key+'" key ('+type(defaultValue).__name__+', '+type(self.memory[key]).__name__+')', 'pantheraConfig')
 
