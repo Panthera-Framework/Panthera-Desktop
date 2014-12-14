@@ -23,6 +23,7 @@ class pantheraLogging:
     panthera = ""
     lastLogTime = 0
     lastMsgTime = 0
+    dateFormat = 'number'
     
     
     
@@ -54,8 +55,13 @@ class pantheraLogging:
             
         self.lastMsgTime = time.time()
         diff = diff[0:10]
-    
-        return "["+str(time.time())+", "+str(diff)+"] "+stackPosition+": "+message
+
+        timeStr = str(time.time())
+
+        if self.dateFormat != 'number':
+            timeStr = time.strftime(self.dateFormat, time.localtime(int(float(timeStr))))
+
+        return "["+timeStr+", "+str(diff)+"] "+stackPosition+": "+message
         
         
     
