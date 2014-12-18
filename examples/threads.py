@@ -17,6 +17,7 @@ if os.path.isdir(t):
     sys.path.append(t)
     
 import pantheradesktop.kernel
+import pantheradesktop.tools
 
 # initialize kernel
 kernel = pantheradesktop.kernel.pantheraDesktopApplication()
@@ -42,7 +43,7 @@ def printB(thread=1):
 
 # let's this example be dynamical and create X number of threads basing on array
 for function in functions:
-    thread, worker = pantheradesktop.kernel.createThread(eval(function))
+    thread, worker = pantheradesktop.tools.createThread(eval(function))
     threads[function] = [thread,worker] # we have to save thread and worker object's in memory until they will not finish working
 
 # and main application thread

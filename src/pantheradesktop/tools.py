@@ -1,6 +1,11 @@
 import imp
 import os
 
+try:
+    from PySide import QtCore
+except ImportError:
+    from PyQt4 import QtCore
+
 def bytes2human(n, format="%(value)i%(symbol)s"):
     """
     >>> bytes2human(10000)
@@ -73,3 +78,64 @@ def _decode_dict(data):
             value = _decode_dict(value)
         rv[key] = value
     return rv
+
+class pantheraWorker(QtCore.QObject):
+    """
+        Worker for pantheraWorkThread
+    """
+
+    finished = QtCore.pyqtSignal()
+    dataReady = QtCore.pyqtSignal(list, dict)
+    job = None
+    jobArgs = None
+    thread = None
+
+    def setJob(self, job, args='', thread=''):
+        self.job = job
+        self.jobArgs = args
+        self.thread = thread
+
+    """
+        Run callable function inside of thread
+    """
+
+    def run(self):
+        if self.job:
+            if self.jobArgs:
+                self.job(self.jobArgs, self.thread)
+            else:
+                self.job(thread=self.thread)
+        else:
+            print("Warning: pantheraWorker job was not set")
+
+        self.finished.emit()
+
+class pantheraWorkThread(QtCore.QThread):
+    def __init__(self, parent=None):
+        QtCore.QThread.__init__(self, parent)
+
+     # this class is solely needed for these two methods, there
+     # appears to be a bug in PyQt 4.6 that requires you to
+     # explicitly call run and start from the subclass in order
+     # to get the thread to actually start an event loop
+
+    def start(self):
+        QtCore.QThread.start(self)
+
+    def run(self):
+        QtCore.QThread.run(self)
+
+def createThread(callable, args='', autostart=True):
+    """ Create a Worker and Thread and connect them """
+
+    appThread = pantheraWorkThread()
+    appWorker = pantheraWorker()
+    appWorker.setJob(callable, args, appThread)
+    appWorker.moveToThread(appThread)
+    appWorker.finished.connect(appThread.terminate)
+    appThread.started.connect(appWorker.run)
+
+    if autostart:
+        appThread.start()
+
+    return appThread, appWorker

@@ -9,6 +9,12 @@ import pantheradesktop.hooking
 import pantheradesktop.logging
 import pantheradesktop.tools as tools
 import pantheradesktop.instance
+import pantheradesktop.interactive
+
+try:
+    import pantheradesktop.interactive
+except Exception:
+    pass
 
 try:
     import pantheradesktop.argsparsing
@@ -21,11 +27,6 @@ except Exception:
     pass
 
 import pantheradesktop.db
-
-try:
-    from PySide import QtCore
-except ImportError:
-    from PyQt4 import QtCore
 
 __author__ = "Damian Kęska"
 __license__ = "LGPLv3"
@@ -74,7 +75,8 @@ class pantheraDesktopApplication(Singleton):
         'config': pantheradesktop.config.pantheraConfig,
         'gui': pantheradesktop.qtgui.pantheraQTGui, # set to None to disable
         'db': pantheradesktop.db.pantheraDB,
-        'instances': '__initialize__'
+        'instances': '__initialize__',
+        'interactive': '__initialize__'
     }
     
     def multipleIsFile(self, dirs, fileName):
@@ -96,6 +98,9 @@ class pantheraDesktopApplication(Singleton):
 
         if self.coreClasses['instances'] == '__initialize__' and hasattr(pantheradesktop, 'instance'):
             self.coreClasses['instances'] = pantheradesktop.instance.pantheraJSONInstance
+
+        if self.coreClasses['interactive'] == '__initialize__' and hasattr(pantheradesktop, 'interactive'):
+            self.coreClasses['interactive'] = pantheradesktop.interactive.pantheraInteractiveConsole
         
         atexit.register(self.pa_exit)
         self.filesDir = os.path.expanduser("~/."+self.appName)
@@ -273,6 +278,10 @@ class pantheraDesktopApplication(Singleton):
             self.instances.cleanup()
             self.hooking.addOption('app.pa_exit', self.instances.unregister)
 
+        if 'interactive' in self.coreClasses and callable(self.coreClasses['interactive']):
+            self.logging.output('Initializing interactive mode', 'pantheraDesktop')
+            self.interactive = self.coreClasses['interactive'](self)
+
         # initialize plugins
         self.loadPlugins()
 
@@ -299,65 +308,3 @@ class pantheraDesktopApplication(Singleton):
         self.logging.output('Got interrupt, finishing jobs and exiting...', 'pantheraDesktop')
         self.hooking.execute('app.pa_exit')
         sys.exit(0)
-
-
-class pantheraWorker(QtCore.QObject):
-    """
-        Worker for pantheraWorkThread
-    """
-    
-    finished = QtCore.pyqtSignal()
-    dataReady = QtCore.pyqtSignal(list, dict)
-    job = None
-    jobArgs = None
-    thread = None
-    
-    def setJob(self, job, args='', thread=''):
-        self.job = job
-        self.jobArgs = args
-        self.thread = thread
-    
-    """
-        Run callable function inside of thread
-    """
-
-    def run(self):
-        if self.job:
-            if self.jobArgs:
-                self.job(self.jobArgs, self.thread)
-            else:
-                self.job(thread=self.thread)
-        else:
-            print("Warning: pantheraWorker job was not set")
-            
-        self.finished.emit()
-            
-class pantheraWorkThread(QtCore.QThread):
-    def __init__(self, parent=None):
-        QtCore.QThread.__init__(self, parent)
-
-     # this class is solely needed for these two methods, there
-     # appears to be a bug in PyQt 4.6 that requires you to
-     # explicitly call run and start from the subclass in order
-     # to get the thread to actually start an event loop
-
-    def start(self):
-        QtCore.QThread.start(self)
-
-    def run(self):
-        QtCore.QThread.run(self)
-        
-def createThread(callable, args='', autostart=True):
-    """ Create a Worker and Thread and connect them """
-    
-    appThread = pantheradesktop.kernel.pantheraWorkThread()
-    appWorker = pantheradesktop.kernel.pantheraWorker()
-    appWorker.setJob(callable, args, appThread)
-    appWorker.moveToThread(appThread)
-    appWorker.finished.connect(appThread.terminate)
-    appThread.started.connect(appWorker.run)
-    
-    if autostart:
-        appThread.start()
-    
-    return appThread, appWorker
