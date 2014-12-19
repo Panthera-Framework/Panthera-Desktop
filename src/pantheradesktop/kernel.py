@@ -232,13 +232,13 @@ class pantheraDesktopApplication(Singleton):
 
         plugin = tools.include(path)
         self.logging.output('Initializing plugin '+pluginName, 'pantheraDesktop')
-        self._plugins[fileName] = eval("plugin."+pluginName+"Plugin(self)")
+        self._plugins[pluginName] = eval("plugin."+pluginName+"Plugin(self)")
 
         ## call initializePlugin() method if available
         if hasattr(self._plugins[pluginName], 'initializePlugin'):
-            self._plugins[fileName].initializePlugin()
+            self._plugins[pluginName].initializePlugin()
 
-        return self._plugins[fileName]
+        return self._plugins[pluginName]
 
 
     def unloadPlugin(self, pluginName):
@@ -248,18 +248,18 @@ class pantheraDesktopApplication(Singleton):
         :return: bool
         """
 
-        if not fileName in self._plugins:
+        if not pluginName in self._plugins:
             return False
 
         ## execute pre-unload function if exists to clean up some stuff
         if hasattr(self._plugins[pluginName], 'unloadPlugin'):
             self.logging.output('Calling "'+pluginName+'" plugin to deinitialize itself')
-            self._plugins[fileName].unloadPlugin()
+            self._plugins[pluginName].unloadPlugin()
 
         ## try to remove all hooks defined by plugin we want to remove
         self.hooking.removeAllByClass(self._plugins[pluginName].__class__.__name__)
 
-        del self._plugins[fileName]
+        del self._plugins[pluginName]
         return True
 
 
