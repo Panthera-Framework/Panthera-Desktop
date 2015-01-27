@@ -1,7 +1,9 @@
 #-*- encoding: utf-8 -*-
 
+import pantheradesktop.tools as tools
 import argparse
 import sys
+import os
 
 __author__ = "Damian Kęska"
 __license__ = "LGPLv3"
@@ -27,6 +29,8 @@ class pantheraArgsParsing:
     # plugins management
     _enablePluginsManagement = True
     _enableConfigManagement = True
+    _enableDebugArgs = True
+    _enableDaemonizeArgs = True
 
     knownArgs = {}
     
@@ -37,9 +41,8 @@ class pantheraArgsParsing:
             Initialize argument parser with Panthera Framework object
             
             panthera - Panthera object
-            
         """
-    
+
         self.panthera = panthera
         self.app = panthera
         self.argparse = argparse.ArgumentParser(description=self.description)
@@ -54,6 +57,36 @@ class pantheraArgsParsing:
             self.createArgument('--config', self.configKeys, 'List configuration keys', action='store_true', required=False)
             self.createArgument('--config-set', self.configSetKey, 'Set configuration key value', required=False)
             self.createArgument('--config-get', self.configGetKey, 'Get configuration value', required=False)
+
+        if self._enableDebugArgs:
+            self.createArgument('--debug', self.setDebuggingMode, '', 'Enable debugging mode', required=False, action='store_false')
+
+        if self._enableDaemonizeArgs:
+            self.createArgument('--daemonize', self.setDaemonMode, '', 'Enable debugging mode', required=False, action='store_false')
+
+
+    def setDaemonMode(self, opt = ''):
+        """
+        Run application in daemon mode
+        :param opt:
+        :return:
+        """
+
+        if not os.path.isdir(self.panthera.filesDir + '/logs'):
+            os.mkdir(self.panthera.filesDir + '/logs')
+
+        tools.daemonize(stdout = self.panthera.filesDir + '/logs/stdout', stderr = self.panthera.filesDir + '/logs/stderr')
+
+
+    def setDebuggingMode(self, opt = ''):
+        """
+        Enable debugging mode
+        :param opt:
+        :return:
+        """
+
+        self.app.logging.silent = False
+        self.app.logging.flushAndEnablePrinting()
 
 
     def configKeys(self, opt=''):

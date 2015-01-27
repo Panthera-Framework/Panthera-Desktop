@@ -2,6 +2,7 @@
 
 import inspect
 import time
+import traceback
 
 __author__ = "Damian Kęska"
 __license__ = "LGPLv3"
@@ -100,7 +101,8 @@ class pantheraHooking:
                 # increase counter
                 self.hooksList[hookName][func]['executed'] = self.hooksList[hookName][func]['executed'] + 1
             except Exception as e:
-                raise RuntimeError('Cannot execute hooked function: "'+str(self.hooksList[hookName][func]['callback'])+'" in "'+hookName+'" slot, error details: '+str(e), 1)
+                #raise RuntimeError('Cannot execute hooked function: "'+str(self.hooksList[hookName][func]['callback'])+'" in "'+hookName+'" slot, error details: '+str(e), 1)
+                traceback.print_exc()
             
         return data
 
