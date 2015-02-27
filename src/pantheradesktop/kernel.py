@@ -1,7 +1,5 @@
 #-*- encoding: utf-8 -*-
-
 import os
-import imp
 import sys
 import atexit
 import pantheradesktop.config
@@ -10,6 +8,7 @@ import pantheradesktop.logging
 import pantheradesktop.tools as tools
 import pantheradesktop.instance
 import pantheradesktop.interactive
+import traceback
 
 try:
     import pantheradesktop.interactive
@@ -210,6 +209,7 @@ class pantheraDesktopApplication(Singleton):
 
                 except Exception as e:
                     self.logging.output('Cannot initialize plugin '+path+'/'+file+', details: '+str(e), 'pantheraDesktop')
+                    self.logging.output(traceback.format_exc(), 'pantheraDesktop')
 
         self.pluginsLoaded = True
 
