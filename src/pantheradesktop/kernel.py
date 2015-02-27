@@ -51,6 +51,7 @@ class pantheraDesktopApplication(Singleton):
     """
 
     config = "" # cofiguration object
+    interactive = ""
     template = "" # gui template object
     argsParser = ""
     instances = ""
@@ -266,10 +267,6 @@ class pantheraDesktopApplication(Singleton):
     def main(self, func=None):
         """ Main function """
         
-        # initialize args parser
-        self.argsParser = self.coreClasses['argsparsing'](self)
-        self.argsParser.parse()
-
         # validate "instances" module
         if 'instances' in self.coreClasses and callable(self.coreClasses['instances']) and hasattr(self.coreClasses['instances'], 'register'):
             self.logging.output('Registering self instance using '+str(self.coreClasses['instances'])+' instance handler')
@@ -284,6 +281,11 @@ class pantheraDesktopApplication(Singleton):
 
         # initialize plugins
         self.loadPlugins()
+
+        # initialize args parser
+        self.argsParser = self.coreClasses['argsparsing'](self)
+        self.argsParser.parse()
+        self.hooking.execute('app.argsparsing.init')
 
         # add default value for configAutocommit
         self.config.getKey('configAutocommit', True)

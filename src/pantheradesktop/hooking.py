@@ -101,6 +101,8 @@ class pantheraHooking:
                 # increase counter
                 self.hooksList[hookName][func]['executed'] = self.hooksList[hookName][func]['executed'] + 1
             except Exception as e:
+                print('Hook: '+hookName)
+                print('Data: '+str(data))
                 #raise RuntimeError('Cannot execute hooked function: "'+str(self.hooksList[hookName][func]['callback'])+'" in "'+hookName+'" slot, error details: '+str(e), 1)
                 traceback.print_exc()
             

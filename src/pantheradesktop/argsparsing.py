@@ -64,6 +64,9 @@ class pantheraArgsParsing:
         if self._enableDaemonizeArgs:
             self.createArgument('--daemonize', self.setDaemonMode, '', 'Enable debugging mode', required=False, action='store_false')
 
+        # @hook app.argsparsing.__init__.after
+        self.app.hooking.execute('app.argsparsing.__init__.after')
+
 
     def setDaemonMode(self, opt = ''):
         """
@@ -194,7 +197,8 @@ class pantheraArgsParsing:
             Example argument handler, shows application version
             
         """
-    
+
+        self.app.hooking.execute('app.argsparsing.version', self)
         print(self.panthera.appName + " " +self.panthera.version)
         sys.exit(0)
         
@@ -235,10 +239,19 @@ class pantheraArgsParsing:
         
         if "addArgs" in dir(self):
             self.addArgs()
+
+            # @hook app.argsparsing.parse.addArgs self
+            self.app.hooking.execute('app.argsparsing.parse.addArgs', self)
         
         self.args = self.argparse.parse_known_args()
         self.opts = self.args[1]
 
+        # @hook app.argsparsing.parse.before self
+        self.app.hooking.execute('app.argsparsing.parse.before', self)
+
         for arg in self.knownArgs:
             if arg in sys.argv:
                 self.knownArgs[arg](self.args[0].__dict__[arg.replace('--', '').replace('-', '_')])
+
+        # @hook app.argsparsing.parse.after self
+        self.app.hooking.execute('app.argsparsing.parse.after', self)
