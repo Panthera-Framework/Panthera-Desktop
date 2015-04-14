@@ -33,9 +33,7 @@ class pantheraArgsParsing:
     _enableDaemonizeArgs = True
 
     knownArgs = {}
-    
-    
-    
+
     def __init__ (self, panthera):
         """
             Initialize argument parser with Panthera Framework object
@@ -45,6 +43,8 @@ class pantheraArgsParsing:
 
         self.panthera = panthera
         self.app = panthera
+
+        self.appendStaticArguments()
         self.argparse = argparse.ArgumentParser(description=self.description)
         self.createArgument('--version', self.version, 'Display help', action='store_true', required=False)
 
@@ -64,9 +64,19 @@ class pantheraArgsParsing:
         if self._enableDaemonizeArgs:
             self.createArgument('--daemonize', self.setDaemonMode, '', 'Enable debugging mode', required=False, action='store_false')
 
-        # @hook app.argsparsing.__init__.after
-        self.app.hooking.execute('app.argsparsing.__init__.after')
+        # @hook app.argsparsing.__init__.after self
+        self.app.hooking.execute('app.argsparsing.__init__.after', self)
 
+
+    def appendStaticArguments(self):
+        """
+        Append static arguments from configuration key "panthera.argsparsing.defaultArgs"
+
+        :return: None
+        """
+
+        if self.app.config.getKey('panthera.argsparsing.defaultArgs', ''):
+            sys.argv = sys.argv + self.app.config.getKey('panthera.argsparsing.defaultArgs').split(' ')
 
     def setDaemonMode(self, opt = ''):
         """
