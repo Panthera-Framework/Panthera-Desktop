@@ -88,7 +88,7 @@ class pantheraDesktopApplication(Singleton):
     
     @classmethod
     def getInstance(c):
-        return c.instance
+        return c._instance
     
     def initialize(self, quiet=False):
         """
