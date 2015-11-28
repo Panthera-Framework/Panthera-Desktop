@@ -141,37 +141,36 @@ class pantheraDB:
         except Exception as e:
             self.panthera.logging.outputException("Cannot connect to database: "+str(e), "pantheraDB")
             sys.exit(1)
-            
+
+
     def query(self, query, values=dict(), commit=True):
         """ Execute a raw query """
         
         ###
-         #
          # Append database prefix and insert values into a query
-         #
         ###
-        
-        self.panthera.logging.output("Original: "+query, "pantheraDB")
-        
-        # inserting escaped values into query
-        query = self.applyValues(query, values)
 
         # {$db_prefix} insertion support
         query = query.replace('{$db_prefix}', str(self.panthera.config.getKey('databasePrefix', 'pa_')))
-        
+        originalQuery = query
+
+        # inserting escaped values into query
+        query, values = self.applyValues(query, values)
+
+        if query.strip() != originalQuery.strip():
+            self.panthera.logging.output("Original: " + query, "pantheraDB")
+
         self.panthera.logging.output("SQL: "+query, "pantheraDB")
         
         ###
-         #
          # Make q query and return a resultset
-         #
         ###
         
         if self.dbType == "peewee":
-            return self.db.execute_sql(query)
+            return self.db.execute_sql(query, values)
             
         elif self.dbType == "sqlite3":
-            obj = self.cursor.execute(query)
+            obj = self.cursor.execute(query, values)
             
             if commit:
                 self.db.commit()
@@ -179,7 +178,7 @@ class pantheraDB:
             return pantheraDBSQLite3ResultSet(obj, self.cursor)
         
         elif self.dbType == 'mysql':
-            obj = self.cursor.execute(query)
+            obj = self.cursor.execute(query, values)
             
             if commit:
                 self.db.commit()
@@ -193,23 +192,23 @@ class pantheraDB:
             sys.exit(1)
 
 
+
     def applyValues(self, query, values):
         """ Append values from dict to query string """
-        
+
+        newValues = []
+
         for value in values:
-            # integer
-            if str(values[value]).isdigit():
-                pass
-            # boolean
-            elif isinstance(values[value], bool):
-                values[value] = bool(values[value])
-            # string and others
-            else:
-                values[value] = '"'+str(values[value])+'"'
-                
-            query = query.replace(':'+value, str(values[value]))
-        
-        return query
+            pos = query.find(':' + value)
+
+            while pos != -1:
+                query = query[:pos] + '?' + query[pos + len(':' + value):]
+                newValues.append(values[value])
+
+                pos = query.find(':' + value)
+
+        return query, newValues
+
 
 
 class pantheraDBSQLite3ResultSet:
