@@ -9,6 +9,9 @@ setup(name='pantheradesktop',
       author = "Damian Kęska",
       author_email = "webnull.www@gmail.com",
       version="0.1",
+      install_requires=[
+          "PyQt4"
+      ],
       license = "LGPL",
       url = 'ttps://github.com/Panthera-Framework/Panthera-Desktop/',
       download_url = 'https://github.com/Panthera-Framework/Panthera-Desktop/archive/master.tar.gz',
