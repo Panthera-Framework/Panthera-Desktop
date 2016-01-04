@@ -10,7 +10,10 @@ setup(name='pantheradesktop',
       author_email = "webnull.www@gmail.com",
       version="0.1",
       license = "LGPL",
+      url = 'ttps://github.com/Panthera-Framework/Panthera-Desktop/',
+      download_url = 'https://github.com/Panthera-Framework/Panthera-Desktop/archive/master.tar.gz',
       package_dir={'': 'src'},      
       packages=['pantheradesktop'],
+      keywords=['panthera', 'desktop', 'framework', 'shell', 'apps', 'cli apps'],
       data_files = []
      )
