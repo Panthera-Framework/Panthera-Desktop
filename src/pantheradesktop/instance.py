@@ -1,10 +1,14 @@
 #-*- encoding: utf-8 -*-
 from pantheradesktop import pantheraClass
 import os
+import pwd
 import json
 import copy
 import sys
 import subprocess
+
+# workaround for bug: OSError: [Errno 2] No such file or directory when trying to use os.getlogin()
+os.getlogin = lambda: pwd.getpwuid(os.getuid())[0]
 
 class pantheraJSONInstance(pantheraClass):
     pid = None

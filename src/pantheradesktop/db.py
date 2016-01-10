@@ -160,8 +160,8 @@ class pantheraDB:
         if query.strip() != originalQuery.strip():
             self.panthera.logging.output("Original: " + query, "pantheraDB")
 
-        self.panthera.logging.output("SQL: "+query, "pantheraDB")
-        
+        self.panthera.logging.output("SQL: "+ query, "pantheraDB")
+
         ###
          # Make q query and return a resultset
         ###
